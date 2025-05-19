@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Бюджети</h2>
+<a href="{% url 'budget_create' %}" class="btn btn-primary mb-3">Додати бюджет</a>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Категорія</th>
+      <th>Ліміт</th>
+      <th>Дії</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for budget in budgets %}
+    <tr>
+      <td>{{ budget.category.name }}</td>
+      <td>{{ budget.limit }}</td>
+      <td><a href="{% url 'budget_edit' budget.pk %}">Редагувати</a></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="3">Бюджети відсутні</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+

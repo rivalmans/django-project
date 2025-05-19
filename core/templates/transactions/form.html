@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load widget_tweaks %}
+<div class="container mt-5 col-md-6">
+  <h2 class="mb-4 fw-semibold">
+    {% if is_edit %}Редагувати транзакцію{% else %}Додати транзакцію{% endif %}
+  </h2>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      <div class="mb-3">
+        <label for="{{ field.id_for_label }}" class="form-label fw-medium">{{ field.label }}</label>
+        {{ field|add_class:"form-control" }}
+        {% if field.help_text %}
+          <div class="form-text">{{ field.help_text }}</div>
+        {% endif %}
+        {% for error in field.errors %}
+          <div class="text-danger small mt-1">{{ error }}</div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary px-4">Зберегти</button>
+      <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary px-4">Назад</a>
+    </div>
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const transactionTypeSelect = document.getElementById('id_transaction_type');
+    const categorySelect = document.getElementById('id_category');
+
+    function loadCategories(transactionType) {
+        fetch(`/ajax/load-categories/?transaction_type=${transactionType}`)
+            .then(response => response.json())
+            .then(data => {
+                categorySelect.innerHTML = '';
+                data.categories.forEach(function(category) {
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.name;
+                    categorySelect.appendChild(option);
+                });
+            });
+    }
+
+    if (transactionTypeSelect.value) {
+        loadCategories(transactionTypeSelect.value);
+    }
+
+    transactionTypeSelect.addEventListener('change', function () {
+        loadCategories(this.value);
+    });
+});
+</script>
+{% endblock %}
+

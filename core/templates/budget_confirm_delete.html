@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Видалити бюджет</h2>
+  <p>Ви дійсно хочете видалити бюджет для категорії <strong>{{ budget.category.name }}</strong>?</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Видалити</button>
+    <a href="{% url 'budget_list' %}" class="btn btn-secondary">Скасувати</a>
+  </form>
+</div>
+{% endblock %}
+

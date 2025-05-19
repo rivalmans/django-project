@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="mb-4">📈 Ваш фінансовий дашборд</h2>
+
+<div class="mb-4 d-flex flex-wrap gap-2">
+  <a href="{% url 'transaction_list' %}" class="btn btn-primary">+ Транзакція</a>
+  <a href="{% url 'category_list' %}" class="btn btn-outline-secondary">+ Категорія</a>
+  <a href="{% url 'budget_list' %}" class="btn btn-outline-primary">💼 Бюджети</a>
+</div>
+
+<form method="get" class="row g-3 mb-4">
+  <div class="col-md-3">
+    {{ form.start_date.label_tag }} {{ form.start_date }}
+  </div>
+  <div class="col-md-3">
+    {{ form.end_date.label_tag }} {{ form.end_date }}
+  </div>
+  <div class="col-auto align-self-end">
+    <button type="submit" class="btn btn-success">Фільтрувати</button>
+  </div>
+</form>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-6">
+    <div class="card text-white bg-success">
+      <div class="card-body">
+        <h5 class="card-title">Загальний дохід</h5>
+        <h2>${{ income }}</h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card text-white bg-danger">
+      <div class="card-body">
+        <h5 class="card-title">Загальні витрати</h5>
+        <h2>${{ expenses }}</h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h4 class="mb-3">📊 Витрати по категоріях</h4>
+<canvas id="categoryChart" height="100"></canvas>
+
+<h4 class="mt-5 mb-3">🧾 Останні транзакції</h4>
+<div class="table-responsive">
+  <table class="table table-striped table-bordered">
+    <thead class="table-light">
+      <tr>
+        <th>Дата</th>
+        <th>Категорія</th>
+        <th>Тип</th>
+        <th>Сума</th>
+        <th>Опис / Дії</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for tx in transactions|slice:":5" %}
+      <tr>
+        <td>{{ tx.date }}</td>
+        <td>{{ tx.category.name }}</td>
+        <td>{{ tx.transaction_type }}</td>
+        <td>${{ tx.amount }}</td>
+        <td>
+          {{ tx.description }}
+          <div class="mt-2">
+            <a href="{% url 'edit_transaction' tx.id %}" class="btn btn-sm btn-outline-secondary">Редагувати</a>
+            <form action="{% url 'delete_transaction' tx.id %}" method="post" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Ви впевнені?')">Видалити</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<h4 class="mt-5 mb-3">📉 Використання бюджету</h4>
+<div class="table-responsive">
+  <table class="table table-hover table-bordered align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Категорія</th>
+        <th>Витрачено</th>
+        <th>Ліміт</th>
+        <th>Використано %</th>
+        <th>Бюджет</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cat in category_data|slice:":5" %}
+      <tr class="{% if cat.over_budget %}table-danger{% endif %}">
+        <td>{{ cat.name }}</td>
+        <td>${{ cat.spent }}</td>
+        <td>{% if cat.limit %}${{ cat.limit }}{% else %}—{% endif %}</td>
+        <td>{% if cat.percent_used %}{{ cat.percent_used }}%{% else %}—{% endif %}</td>
+        <td>
+          {% for b in budgets %}
+            {% if b.category.name == cat.name %}
+              <a href="{% url 'budget_edit' b.id %}" class="btn btn-sm btn-outline-secondary">Редагувати</a>
+              <form action="{% url 'delete_budget' b.id %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Ви впевнені?')">Видалити</button>
+              </form>
+            {% endif %}
+          {% endfor %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="text-center">Бюджети не задані</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('categoryChart').getContext('2d');
+  const data = {
+    labels: [{% for cat in category_data %}'{{ cat.name }}',{% endfor %}],
+    datasets: [
+      {
+        label: 'Витрати',
+        data: [{% for cat in category_data %}{{ cat.spent }},{% endfor %}],
+        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+      },
+      {
+        label: 'Бюджет',
+        data: [{% for cat in category_data %}{{ cat.limit|default:"0" }},{% endfor %}],
+        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+      }
+    ]
+  };
+  const myChart = new Chart(ctx, {
+    type: 'bar',
+    data: data,
+  });
+</script>
+{% endblock %}
+
+
+
+
+

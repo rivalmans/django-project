@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Видалити категорію</h2>
+  <p>Ви впевнені, що хочете видалити категорію "{{ category.name }}"?</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Так, видалити</button>
+    <a href="{% url 'transactions:category_list' %}" class="btn btn-secondary">Скасувати</a>
+  </form>
+</div>
+{% endblock %}
+
+

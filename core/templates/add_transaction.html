@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2 class="mb-4">💼 Управління транзакціями</h2>
+
+<!-- Форма додавання нової транзакції -->
+<div class="card shadow-sm mb-5">
+  <div class="card-header bg-primary text-white">
+    ➕ Додати нову транзакцію
+  </div>
+  <div class="card-body">
+    <form method="post" action="{% url 'add_transaction' %}">
+      {% csrf_token %}
+      <div class="row g-3">
+        {% for field in form %}
+          <div class="col-md-6">
+            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+              <div class="text-danger small">{{ field.errors }}</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      <button type="submit" class="btn btn-success mt-3">💾 Додати</button>
+    </form>
+  </div>
+</div>
+
+<!-- Статистика -->
+<div class="row mb-5">
+  <div class="col-md-4">
+    <div class="card text-white bg-success shadow-sm">
+      <div class="card-body">
+        <h5>Загальний дохід</h5>
+        <h3>${{ income }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-white bg-danger shadow-sm">
+      <div class="card-body">
+        <h5>Загальні витрати</h5>
+        <h3>${{ expenses }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-white bg-info shadow-sm">
+      <div class="card-body">
+        <h5>Баланс</h5>
+        <h3>
+          ${{ income|floatformat:2|add:"-"|add:expenses|floatformat:2 }}
+        </h3>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Графік -->
+<h4 class="mb-3">📊 Витрати по категоріях</h4>
+<canvas id="categoryChart" height="120"></canvas>
+
+<!-- Таблиця з транзакціями -->
+<h4 class="mt-5 mb-3">📄 Всі транзакції</h4>
+<div class="table-responsive">
+  <table class="table table-hover table-bordered align-middle shadow-sm bg-white">
+    <thead class="table-light">
+      <tr>
+        <th>Дата</th>
+        <th>Категорія</th>
+        <th>Тип</th>
+        <th>Сума</th>
+        <th>Опис</th>
+        <th class="text-center">Дії</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for tx in transactions %}
+        <tr>
+          <td>{{ tx.date }}</td>
+          <td>{{ tx.category.name }}</td>
+          <td>{{ tx.transaction_type }}</td>
+          <td>${{ tx.amount }}</td>
+          <td>{{ tx.description }}</td>
+          <td class="text-center">
+            <a href="{% url 'edit_transaction' tx.id %}" class="btn btn-sm btn-outline-primary">✏️</a>
+            <form action="{% url 'delete_transaction' tx.id %}" method="post" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Ви впевнені?')">🗑</button>
+            </form>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="6" class="text-center">Транзакції відсутні</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Скрипт динамічного завантаження категорій -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const transactionTypeSelect = document.getElementById('id_transaction_type');
+    const categorySelect = document.getElementById('id_category');
+
+    function loadCategories(transactionType) {
+        fetch(`/ajax/load-categories/?transaction_type=${transactionType}`)
+            .then(response => response.json())
+            .then(data => {
+                categorySelect.innerHTML = '';
+                data.categories.forEach(function(category) {
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.name;
+                    categorySelect.appendChild(option);
+                });
+            });
+    }
+
+    if (transactionTypeSelect && transactionTypeSelect.value) {
+        loadCategories(transactionTypeSelect.value);
+    }
+
+    if (transactionTypeSelect) {
+        transactionTypeSelect.addEventListener('change', function () {
+            loadCategories(this.value);
+        });
+    }
+});
+</script>
+
+<!-- Графік витрат -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('categoryChart').getContext('2d');
+  const chartData = {
+    labels: [{% for cat in category_data %}'{{ cat.name }}',{% endfor %}],
+    datasets: [{
+      label: 'Витрати',
+      data: [{% for cat in category_data %}{{ cat.spent }},{% endfor %}],
+      backgroundColor: 'rgba(255, 99, 132, 0.6)',
+      borderRadius: 5,
+    }]
+  };
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: chartData,
+    options: {
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
+</script>
+
+{% endblock %}
+
+
+

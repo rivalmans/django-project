@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5 text-center">
+  <h2>Ви вийшли з акаунту</h2>
+  <p>Дякуємо, що користувалися нашим сервісом.</p>
+  <a href="{% url 'login' %}" class="btn btn-primary mt-3">Увійти знову</a>
+  <a href="{% url 'register' %}" class="btn btn-secondary mt-3 ms-2">Зареєструватися</a>
+</div>
+{% endblock %}
+

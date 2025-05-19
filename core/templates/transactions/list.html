@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">📜 Історія транзакцій</h2>
+    <a href="{% url 'add_transaction' %}" class="btn btn-success btn-lg shadow-sm">
+      ➕ Додати транзакцію
+    </a>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} shadow-sm" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="table-responsive shadow-sm rounded">
+    <table class="table table-hover align-middle mb-5 bg-white">
+      <thead class="table-light">
+        <tr>
+          <th>Дата</th>
+          <th>Категорія</th>
+          <th>Тип</th>
+          <th>Сума</th>
+          <th>Опис</th>
+          <th class="text-center">Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tx in transactions %}
+        <tr>
+          <td>{{ tx.date }}</td>
+          <td>{{ tx.category.name }}</td>
+          <td>{{ tx.transaction_type }}</td>
+          <td>${{ tx.amount }}</td>
+          <td>{{ tx.description }}</td>
+          <td class="text-center">
+            <a href="{% url 'edit_transaction' tx.id %}" class="btn btn-sm btn-outline-primary me-1" title="Редагувати">✏️</a>
+            <form method="post" action="{% url 'delete_transaction' tx.id %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Ви впевнені?')" title="Видалити">🗑</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center text-muted fst-italic">Транзакції відсутні</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+

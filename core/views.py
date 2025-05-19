@@ -1,13 +1,12 @@
 from rest_framework import viewsets, permissions
 from .models import Category, Transaction, Budget
 from .serializers import CategorySerializer, TransactionSerializer, BudgetSerializer
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum
-from django.shortcuts import render
-from .models import Transaction, Budget, Category
-from .forms import DateRangeForm
-
+from django.db.models import Sum, F, Q
+from .forms import DateRangeForm, RegisterForm, TransactionForm, CategoryForm, BudgetForm
+from django.contrib import messages
+from django.http import JsonResponse
 
 class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
@@ -43,7 +42,6 @@ class BudgetViewSet(viewsets.ModelViewSet):
 def index(request):
     return render(request, 'index.html')
 
-from django.db.models import Sum, F, Q
 
 @login_required
 def dashboard(request):
@@ -93,9 +91,6 @@ def dashboard(request):
         'budgets': budgets,
     })
 
-from django.shortcuts import render, redirect
-from .forms import RegisterForm
-from django.contrib import messages
 
 def register(request):
     if request.method == 'POST':
@@ -107,10 +102,6 @@ def register(request):
     else:
         form = RegisterForm()
     return render(request, 'register.html', {'form': form})
-
-from django.contrib.auth.decorators import login_required
-from .forms import TransactionForm
-from django.contrib import messages
 
 
 @login_required
@@ -149,8 +140,6 @@ def add_transaction(request):
     return render(request, 'add_transaction.html', context)
 
 
-from .forms import CategoryForm
-
 @login_required
 def add_category(request):
     if request.method == 'POST':
@@ -165,8 +154,6 @@ def add_category(request):
         form = CategoryForm()
     return render(request, 'add_category.html', {'form': form})
 
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
 
 @login_required
 def load_categories(request):
@@ -174,12 +161,6 @@ def load_categories(request):
     categories = Category.objects.filter(user=request.user, transaction_type=transaction_type).values('id', 'name')
     return JsonResponse({'categories': list(categories)})
 
-
-# core/views.py
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
-from .forms import BudgetForm
-from .models import Budget
 
 @login_required
 def budget_list(request):
@@ -211,11 +192,6 @@ def budget_edit(request, pk):
         form = BudgetForm(instance=budget, user=request.user)
     return render(request, 'budget_form.html', {'form': form})
 
-
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Transaction
-from .forms import TransactionForm
-@login_required
 
 @login_required
 def transaction_list(request):
@@ -257,6 +233,7 @@ def delete_transaction(request, pk):
         messages.success(request, 'Транзакцію видалено.')
         return redirect('transaction_list')
     return render(request, 'transactions/confirm_delete.html', {'transaction': transaction})
+
 @login_required
 def category_list(request):
     categories = Category.objects.filter(user=request.user)
@@ -294,6 +271,7 @@ def category_delete(request, pk):
         category.delete()
         return redirect('category_list')
     return render(request, 'transactions/category_confirm_delete.html', {'category': category})
+
 @login_required
 def edit_category(request, pk):
     category = get_object_or_404(Category, pk=pk, user=request.user)
@@ -305,6 +283,7 @@ def edit_category(request, pk):
     else:
         form = CategoryForm(instance=category)
     return render(request, 'transactions/category_form.html', {'form': form, 'is_edit': True})
+
 @login_required
 def delete_budget(request, pk):
     budget = get_object_or_404(Budget, pk=pk, user=request.user)
@@ -312,12 +291,14 @@ def delete_budget(request, pk):
         budget.delete()
         return redirect('budget_list')
     return render(request, 'budget_confirm_delete.html', {'budget': budget})
+
 @login_required
 def load_categories(request):
     transaction_type = request.GET.get('transaction_type')
     categories = Category.objects.filter(user=request.user, transaction_type=transaction_type).values('id', 'name')
     return JsonResponse({'categories': list(categories)})
-from django.shortcuts import redirect
+
 
 def index(request):
     return redirect('dashboard')
+

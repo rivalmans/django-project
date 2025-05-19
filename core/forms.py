@@ -1,8 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Category
-
+from .models import Category, Transaction, Budget
 
 class RegisterForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -11,14 +10,6 @@ class RegisterForm(UserCreationForm):
         model = User
         fields = ["username", "email", "password1", "password2"]
 
-from django import forms
-from .models import Transaction
-
-from django import forms
-from .models import Transaction, Category
-
-from django import forms
-from .models import Transaction, Category
 
 class TransactionForm(forms.ModelForm):
     date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
@@ -54,15 +45,11 @@ class TransactionForm(forms.ModelForm):
             )
 
 
-from django import forms
-
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
         fields = ['name', 'transaction_type']
 
-from django import forms
-from .models import Budget, Category
 
 class BudgetForm(forms.ModelForm):
     class Meta:
@@ -77,6 +64,8 @@ class BudgetForm(forms.ModelForm):
         else:
             self.fields['category'].queryset = Category.objects.none()
 
+
 class DateRangeForm(forms.Form):
     start_date = forms.DateField(label="Від", widget=forms.DateInput(attrs={'type': 'date'}))
     end_date = forms.DateField(label="До", widget=forms.DateInput(attrs={'type': 'date'}))
+
